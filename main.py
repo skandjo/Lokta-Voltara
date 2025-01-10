@@ -4,6 +4,8 @@ import numpy as np
 from itertools import product
 from fractions import Fraction
 
+
+
 """
 ################
 ### PARTIE 1 ###
@@ -28,20 +30,17 @@ from fractions import Fraction
 # x[i+1] = x[i] + step * (alpha * x[i] - beta * x[i] * y[i])  Lapins
 # y[i+1] = y[i] + step * (delta * x[i] * y[i] - gamma * y[i]) Renards
 
-
-
+# Initialisation des variables
+STEP = 0.001
+DAYS = 1000
 
 # Paramètres du modèle
-ALPHA, BETA, DELTA, GAMMA = 1 / 3, 1 / 3, 1 / 3, 1 / 3
-STEP = 0.001
+ALPHA, BETA, DELTA, GAMMA = 1/3, 1/3, 1/3, 1/3
 
-# Initialisation des variables
-DAYS = 1000
+# Conditions initiales
 lapin = np.zeros(DAYS)
 renard = np.zeros(DAYS)
 time = np.zeros(DAYS)
-
-# Conditions initiales
 lapin[0] = 1000
 renard[0] = 2000
 
@@ -74,12 +73,12 @@ df = pd.read_csv(DATA_FILE)
 
 # Initialisation des données
 days_data = df.shape[0]
-lapin_reel = df['lapin'].values
-renard_reel = df['renard'].values
+lapin_reel = df['lapin'].values.astype(float)
+renard_reel = df['renard'].values.astype(float)
 
 # 2)
-# Fonction pour simuler le modèle avec des paramètres donnés
-def simulate_model(alpha, beta, delta, gamma, lapin0, renard0, step, days):
+# Fonction pour simuler le modèle avec la methode d'euler avec des paramètres donnés
+def simulate_model_euler(alpha, beta, delta, gamma, lapin0, renard0, step, days):
     lapin_theory = np.zeros(days)
     renard_theory = np.zeros(days)
     time = np.zeros(days)
@@ -95,7 +94,7 @@ def simulate_model(alpha, beta, delta, gamma, lapin0, renard0, step, days):
             delta * lapin_theory[i - 1] * renard_theory[i - 1] - gamma * renard_theory[i - 1]
         )
         time[i] = time[i - 1] + step
-
+    print((lapin_theory * 1000).dtype)
     return lapin_theory * 1000, renard_theory * 1000, time
 
 # Fonction pour calculer l'erreur quadratique moyenne (MSE)
@@ -105,11 +104,12 @@ def calculate_mse(alpha, beta, delta, gamma, lapin_reel0, renard_reel0):
     )
     mse_lapin = np.mean((lapin_pred - lapin_reel) ** 2)
     mse_renard = np.mean((renard_pred - renard_reel) ** 2)
+    
     return mse_lapin + mse_renard
 
 # Recherche des meilleurs paramètres
 param_values = [1 / 3, 2 / 3, 1, 4 / 3]
-best_params = None
+best_params = [None]
 best_mse = float('inf')
 
 for alpha, beta, delta, gamma in product(param_values, repeat=4):
@@ -122,9 +122,10 @@ print("Meilleurs paramètres :", best_params)
 print("Erreur MSE minimale :", best_mse)
 
 # Simulation avec les meilleurs paramètres
-lapin_pred, renard_pred, time = simulate_model(
+lapin_pred, renard_pred, time = simulate_model_euler(
     best_params[0], best_params[1], best_params[2], best_params[3],
-    lapin_reel[0], renard_reel[0], STEP, DAYS
+    lapin_reel[0], renard_reel[0], 
+    STEP, DAYS*100
 )
 
 # Tracer les résultats
